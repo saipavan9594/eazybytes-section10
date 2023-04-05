@@ -1,0 +1,98 @@
+version: "3.8"
+
+services:
+
+  configserver:
+    image: saipavan9594/section7-configserver2:latest
+    mem_limit: 700m
+    ports:
+      - "8071:8071"
+    networks:
+     - eazybank
+
+  eurekaserver:
+    image: saipavan9594/eureka-discovery-server:latest
+    mem_limit: 700m
+    ports:
+      - "8072:8072"
+    networks:
+     - eazybank
+    depends_on:
+      - configserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 45s
+        max_attempts: 3
+        window: 360s
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      #for eureka server we have only one property file so the profile property is not required to mention.
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+     
+  accounts:
+    image: saipavan9594/section8-accounts:latest
+    mem_limit: 700m
+    ports:
+      - "8081:8081"
+    networks:
+      - eazybank
+    depends_on:
+      - configserver
+      - eurekaserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 45s
+        max_attempts: 3
+        window: 360s
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      # in the abbove the uri mentioned as "http://configserver:8071/" --- "configserver" mentioned is the service name which is under services section at line:5
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8072/eureka/
+  
+  loans:
+    image: saipavan9594/section8-loans:latest
+    mem_limit: 700m
+    ports:
+      - "8082:8082"
+    networks:
+      - eazybank
+    depends_on:
+      - configserver
+      - eurekaserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 45s
+        max_attempts: 3
+        window: 360s
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8072/eureka/
+    
+  cards:
+    image: saipavan9594/section8-cards:latest
+    mem_limit: 700m
+    ports:
+      - "8083:8083"
+    networks:
+      - eazybank
+    depends_on:
+      - configserver
+      - eurekaserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 45s
+        max_attempts: 3
+        window: 360s
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8072/eureka/
+      
+networks:
+  eazybank:
